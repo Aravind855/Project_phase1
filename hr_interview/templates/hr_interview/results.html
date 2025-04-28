@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Results</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'style.css' %}"> 
+
+    <style>
+        /* Overall container styling */
+        .result_container {
+            width: 80%;  /* Adjust width as needed */
+            margin: 0 auto; /* Center the container */
+            font-family: Arial, sans-serif; /* Add a clean font */
+        }
+        
+        /* Header styling */
+        h1 {
+            background-color: #2c3e50; /* Dark blue background */
+            color: white;  /* White text color */
+            padding: 10px;
+            text-align: center;  /* Center align the header text */
+            border-radius: 5px;
+        }
+        
+        h2 {
+            color: #34495e;  /* Dark greyish-blue color for subheadings */
+            font-size: 1.4em;  /* Slightly larger subheading */
+            margin-bottom: 10px;  /* Space below subheadings */
+        }
+        
+        /* Style for the individual question and analysis block */
+        .question-block {
+            margin-bottom: 30px;  /* Space between question blocks */
+            padding: 15px;
+            border: 1px solid #ecf0f1;
+            border-radius: 8px;
+            background-color: #ecf0f1; /* Light grey background */
+        }
+        
+        .result-item {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .result-item strong {
+            color: #2980b9;  /* Blue color for question numbers */
+        }
+        
+        .result-item em {
+            color: #7f8c8d;  /* Light grey color for answers */
+        }
+        
+        /* Table styling for analysis */
+        table {
+            margin-left: auto;
+            margin-right: auto;
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #ecf0f1;
+            font-weight: bold;
+        }
+        
+        /* Styling for ratings and final results */
+        .average-ratings-table, .final-rating-container {
+            clear: both;
+            margin-top: 20px;
+        }
+        
+        .final-rating-container {
+            text-align: center;
+            background-color: #d5f5e3;  /* Light green background */
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .final-rating-container h2 {
+            font-size: 1.5em;
+            color: #34495e;
+        }
+        
+        .overall-feedback {
+            padding: 15px;
+            background-color: #f8f9fa;  /* Light grey background */
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        /* Button styling */
+        .btn-primary {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 30px;
+            background-color: #3498db;  /* Blue background */
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="result_container">
+        <h1>Interview Summary</h1>
+
+        {% for response in interview_responses %}
+            <div class="question-block">
+                <div class="result-item">
+                    <strong>Q{{ forloop.counter }}: {{ response.question }}</strong><br>
+                    <em>A: {{ response.answer }}</em>
+                </div>
+
+                <h2>Analysis for Question {{ response.index }}:</h2>
+                <div class="results-list">
+                    <table border=1>
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Rating</th>
+                                <th>Explanation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for analysis_data in analysis_results_by_question %}
+                            {% if analysis_data.question_number == response.index %}  <!-- Match question number -->
+                                {% for category, rating, explanation in analysis_data.analysis_results %}
+                                    <tr>
+                                        <td>{{ category }}</td>
+                                        <td>{{ rating }}</td>
+                                        <td>{{ explanation }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <br>  <!-- Spacing between question blocks -->
+        {% endfor %}
+
+        <div class="average-ratings-table">
+            <h2>Average Ratings:</h2>
+            {{ average_ratings_table|safe }}
+        </div>
+        <br>
+
+        <div class="final-rating-container">
+            <h2>Final Rating</h2>
+            <p><strong>{{ final_rating }} / 10</strong></p> 
+        </div>
+        <br>
+
+        <h2>Overall Feedback:</h2>
+        <div class="overall-feedback">{{ overall_feedback|safe }}</div>
+    </div>
+</body>
+</html>

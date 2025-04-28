@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Resume</title>
+    {% load static %}
+
+    <link rel="stylesheet" href="{% static 'style.css' %}"> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+            color: #333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            margin: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom right, #f9e1fa, #c3f0f3);
+            border-radius: 15px;
+            gap: 20px; /* Add spacing between elements */
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(17, 255, 152, 0.2);
+            color: #1a068f;
+        }
+    
+        h3 {
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            color: #0814c1;
+        }
+    
+        label {
+            text-align: center;
+        }
+        
+        header {
+            position: fixed; /* Makes the nav bar stick to the top */
+            top: 0; /* Aligns it to the top of the page */
+            left: 0; /* Ensures it starts from the left edge of the screen */
+            width: 100%; /* Spans the entire width of the screen */
+            height:60px;
+            z-index: 1000; /* Ensures it stays above other elements */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Navigation Styles */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 5%;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2575fc;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #2575fc;
+        }
+
+        .get-started {
+            background: #2575fc;
+            color: white !important;
+            padding: 12px 25px;
+            border-radius: 30px;
+            transition: transform 0.3s;
+        }
+
+        .get-started:hover {
+            transform: translateY(-2px);
+        }
+        
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+    
+        input[type="file"] {
+            width: 300px;
+            padding: 15px;
+            background: linear-gradient(to bottom right, #c6bfce, #adcbff);
+            border: 0.5px solid #2575fc; /* Border color */
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow */
+            cursor: pointer; /* Change cursor */
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        input[type="file"]:hover {
+            background-color: #f1f1f1;
+            border-color: #1a5bbf;
+        }
+    
+        .hero {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .upload-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #2575fc;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background-color: #1a5bbf;
+        }
+        
+        .guidelines-icon {
+            font-size: 1.5rem; /* Larger icon */
+            color: #e40101;
+            cursor: pointer;
+            transition: color 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .guidelines-icon:hover {
+            color: #f39c12;
+        }
+        
+        footer {
+            position: fixed; /* Makes the footer stick to the bottom */
+            bottom: 0; /* Aligns it to the bottom of the page */
+            left: 0; /* Ensures it starts from the left edge of the screen */
+            width: 100%; /* Spans the entire width of the screen */
+            text-align: center;
+            padding: 0.2px ;
+            background-color: #343a40;
+            color: white;
+        }
+        
+        .social-media a {
+            color: white;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        
+        .social-media a:hover {
+            text-decoration: underline;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            width: 250px;
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #fff;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+    
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #2575fc, #6a11cb);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            transform: scale(1.05);
+        }
+    
+        .btn-primary:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 15px;
+        }
+        
+        .modal-content ul {
+            text-align: left;
+            margin-top: 15px;
+        }
+        
+        .close-btn {
+            margin-top: 10px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .close-btn:hover {
+            background: #d67c0d;
+        }
+        .status-text {
+            color: green;
+            margin-top: 10px;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the message horizontally */
+            text-align: center; /* Ensure the text is centered */
+        }
+    
+        .status-text .spinner {
+            margin-right: 8px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid green;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+    
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    
+    </style>
+    <script>
+        function showInitializationMessage() {
+            const message = document.getElementById('status-message');
+            message.innerHTML = '<span class="spinner"></span> Initializing the interview...';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="nav-content">
+                <div class="logo">AI Recruiter</div>
+                <div class="nav-links">
+                    <a href="#home">Home</a>
+                    <a href="#about">About</a>
+                    <a href="#features">Features</a>
+                    <a href="#contact">Contact</a>
+                    
+                    
+                </div>
+            </div>
+        </nav>
+
+        <h1>Welcome to AI Recruiter</h1>
+        <h3>Your smart assistant for job applications</h3>
+
+        <div class="content-container">
+            <div class="form-card">
+                <h2>Start Interview</h2>
+                <form action="{% url 'index' interview_type=interview_type %}" method="post" enctype="multipart/form-data" onsubmit="showInitializationMessage()">
+                    {% csrf_token %}
+                    <label for="resume_image" class="form-label">Upload Resume Image</label><br>
+                    <input type="file" id="resume_image" name="resume_image" accept="image/*" required class="form-input">
+                    <br><br>
+                    <button type="submit" class="btn-primary">Start Interview</button>
+                </form>
+                <p id="status-message" class="status-text"></p>
+            </div>
+
+            <div>
+                <span class="guidelines-icon" onclick="toggleGuidelines()">&#9432;</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        
+        <div class="social-media">
+            <p>&copy; 2024 AI Recruiter. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <div class="modal" id="guidelines-modal">
+        <div class="modal-content">
+            <h2>Interview Guidelines</h2>
+            <ul>
+                <li>Ensure a stable internet connection.</li>
+                <li>Prepare a quiet environment.</li>
+                <li>Check your camera and microphone.</li>
+                <li>Dress professionally.</li>
+                <li>Be punctual.</li>
+                <li>Keep a copy of your resume handy.</li>
+                <li>Listen carefully and organize your thoughts.</li>
+                <li>Show enthusiasm and be yourself.</li>
+                <li>Ask clarifying questions if needed.</li>
+            </ul>
+            <button onclick="toggleGuidelines()">Close</button>      
+          </div>
+    </div>
+    <script>
+        function toggleGuidelines() {
+            const modal = document.getElementById('guidelines-modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+    </script>
+
+</body>
+</html>
