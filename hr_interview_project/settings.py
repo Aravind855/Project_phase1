@@ -16,7 +16,6 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -24,14 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-@2c=p3v=@u$2c62f8%&zs$bh1b4(91rp9848c8isq0jt@kb)g8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False  # Set to False for production
 
 ALLOWED_HOSTS = ['*']
 
 from dotenv import load_dotenv
 load_dotenv()
 import os
-
 
 # Application definition
 
@@ -41,12 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic',  # Add Whitenoise for static file serving
     'django.contrib.staticfiles',
     'hr_interview',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add Whitenoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,7 +75,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'hr_interview_project.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -83,10 +82,8 @@ DATABASES = { 'default': { 'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_
 
 DATABASE_ROUTERS = ['hr_interview_project.db_router.NoSQLRouter']
 
-
-
-
 APPEND_SLASH = True  # This is the default setting, it should be enabled
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -105,7 +102,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -117,7 +113,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -125,40 +120,17 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory for collected static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 # MongoDB settings
-# MONGODB_URI = 'mongodb://localhost:27017/'  # Adjust as needed
-# MONGODB_DATABASE = 'hr_interview'  # Database name
-# MONGODB_ADMIN_COLLECTION = 'admin_users'  # Collection for admin users
-# MONGODB_USER_COLLECTION = 'users'  # Collection for regular users
-
-# # Email settings
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# # Authentication settings
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-#     'allauth.account.auth_backends.AuthenticationBackend',
-# ]
-
-# SITE_ID = 1
-
-# ACCOUNT_AUTHENTICATION_METHOD = 'email'
-# ACCOUNT_EMAIL_REQUIRED = True
-# ACCOUNT_USERNAME_REQUIRED = False
-# ACCOUNT_EMAIL_VERIFICATION = 'none'
-# LOGIN_REDIRECT_URL = 'index'
-# LOGOUT_REDIRECT_URL = 'index'
-
-MEDIA_URL='/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
-
 MONGODB_URI = os.getenv('MONGODB_URI')
 DB_NAME = 'AI_interview'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+MEDIA_URL='/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
