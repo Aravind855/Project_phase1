@@ -943,6 +943,7 @@ def results(request):
     }
     return render(request, 'hr_interview/results.html', context)
 
+
 def home(request):
         return render(request, 'hr_interview/home.html')
 
