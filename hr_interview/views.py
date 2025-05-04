@@ -31,12 +31,12 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-genai.configure(api_key="AIzaSyBJEq7saincPvLp9uzMWHsp2tPptl0NCmY")  # REPLACE with your actual API key
+genai.configure(api_key="AIzaSyBMrdrqZzvYTCRXV3kFSf8gk3At0kK_NHU")  # REPLACE with your actual API key
 model = genai.GenerativeModel("gemini-1.5-flash-8b")
 
 def configure_model(api_key):
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("models/gemini-1.0-pro")
+    model = genai.GenerativeModel("gemini-1.5-flash-8b")
     return model
 
 audio_alert = False
@@ -88,9 +88,9 @@ def generate_greetting(model, previous_questions=[]):
     previous_answer = previous_questions[-1]['answer'] if previous_questions else ""
 
     prompt = f"""
-    Based on the previous answer: "{previous_answer}", if the candidate mentioned any name in previous answer , then ask a question with mentioning the name , otherwise dont mention the name just  
-    ask a question to smoothly transition into the interview. Ask 1 question only, for example:
-    - "Are you excited to attend this interview?" , 
+    Based on the previous answer: "{previous_answer}", 
+    the user has previously provided the name , now generate a message that should be smooth transition to the interview like before start asking the questions , makeing the candidate to feel comfortable 
+    for example , "Are you excited to attend this interview?" , "how would you prepare for this interview?" 
     it should be in 1 or 2 lines, it should be like a question.
     Do not provide any answers; just ask the questions in a friendly and inviting way.
     """
@@ -766,40 +766,52 @@ def conduct_interview(model, resume_text, interview_type="general"):
 
 # ----- View Functions -----
 
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 def index(request, interview_type=None):
     if not interview_type:
-        # Redirect to the home page or show an error
         messages.error(request, "No interview type specified.")
-        return redirect('home')  # Or redirect to a default page
+        return redirect('home')
     if request.method == "POST":
         form = ResumeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 file = form.cleaned_data['resume_image']
-                image_path = os.path.join(settings.MEDIA_ROOT, file.name)
-                with open(image_path, 'wb') as f:
-                    for chunk in file.chunks():
-                        f.write(chunk)
-
-                resume_text = extract_text_from_image(image_path)
+                # Process image in memory
+                image = Image.open(file)
+                resume_text = pytesseract.image_to_string(image)
                 if not resume_text:
-                    messages.error(request, "Could not extract text.")
+                    messages.error(request, "Could not extract text from resume.")
                     return redirect('index', interview_type=interview_type)
 
-                request.session['interview_data'] = conduct_interview(model, resume_text, interview_type)
+                # Conduct interview and store data
+                interview_data = conduct_interview(model, resume_text, interview_type)
+                
+                # Store resume text and interview data in MongoDB
+                interview_collection = db['interviews']
+                interview_record = {
+                    'user_id': request.user.id if request.user.is_authenticated else None,
+                    'interview_type': interview_type,
+                    'resume_text': resume_text,
+                    'interview_data': interview_data,
+                    'created_at': datetime.now()
+                }
+                interview_collection.insert_one(interview_record)
+
+                request.session['interview_data'] = interview_data
                 request.session['current_question'] = 0
 
                 return redirect(reverse('question', kwargs={'interview_type': interview_type}))
 
             except Exception as e:
                 logger.exception(f"Error in index view: {e}")
-                messages.error(request, "An error occurred.")
+                messages.error(request, "An error occurred while processing the resume.")
                 return redirect('index', interview_type=interview_type)
-
         else:
             messages.error(request, "Invalid file upload.")
             return redirect('index', interview_type=interview_type)
-    else:  # GET request
+    else:
         form = ResumeUploadForm()
     return render(request, 'hr_interview/index.html', {'form': form, 'interview_type': interview_type})
 
@@ -853,84 +865,83 @@ def question(request, interview_type):
     })
       
 def results(request):
-        from pymongo import MongoClient
-        from django.conf import settings
-        from bson.objectid import ObjectId
+    from pymongo import MongoClient
+    from django.conf import settings
+    from bson.objectid import ObjectId
 
-        # MongoDB setup
-        client = MongoClient(settings.MONGODB_SETTINGS['HOST'], settings.MONGODB_SETTINGS['PORT'])
-        db = client[settings.MONGODB_SETTINGS['DB_NAME']]
-        results_collection = db['interview_results']
+    # MongoDB setup using Atlas URI
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    results_collection = db['interview_results']
 
-        # Retrieve session data
-        interview_data = request.session.get('interview_data', [])
+    # Retrieve session data
+    interview_data = request.session.get('interview_data', [])
 
-        if not interview_data:
-            messages.error(request, "No interview data found.")
-            return HttpResponseRedirect('/question')
+    if not interview_data:
+        messages.error(request, "No interview data found.")
+        return HttpResponseRedirect('/question')
 
-        # Add index to interview data
-        for i, item in enumerate(interview_data):
-            item['index'] = i + 1
+    # Add index to interview data
+    for i, item in enumerate(interview_data):
+        item['index'] = i + 1
 
-        questions_answers = [(item['question'], item['answer']) for item in interview_data]
-        analysis_results_by_question = []
+    questions_answers = [(item['question'], item['answer']) for item in interview_data]
+    analysis_results_by_question = []
 
-        for i, (question, answer) in enumerate(questions_answers):
-            result = analyze_question_relevance(model, question, answer)
-            table_data = parse_response(result)
+    for i, (question, answer) in enumerate(questions_answers):
+        result = analyze_question_relevance(model, question, answer)
+        table_data = parse_response(result)
 
-            analysis_results_by_question.append({
-                'question_number': i + 1,
-                'analysis_results': table_data
-            })
+        analysis_results_by_question.append({
+            'question_number': i + 1,
+            'analysis_results': table_data
+        })
 
-        ratings_explanations = [
-            item for sublist in [analysis['analysis_results'] for analysis in analysis_results_by_question] for item in sublist
-        ]
+    ratings_explanations = [
+        item for sublist in [analysis['analysis_results'] for analysis in analysis_results_by_question] for item in sublist
+    ]
 
-        if ratings_explanations:
-            try:
-                average_ratings_html, overall_feedback_text, final_rating = get_overall_feedback(ratings_explanations)
-            except Exception as e:
-                logging.error(f"Error in get_overall_feedback: {e}")
-                average_ratings_html = ""
-                overall_feedback_text = "<p>Error generating overall feedback.</p>"
-                final_rating = 0
-        else:
-            average_ratings_html = ""
-            overall_feedback_text = "<p>No feedback available. Please ensure questions have been answered.</p>"
-            final_rating = 0
-
-        # Convert HTML to structured data
-        average_ratings_data = parse_html_to_dict(average_ratings_html)
-        #overall_feedback_text = BeautifulSoup(overall_feedback_text, 'html.parser').get_text(strip=True)
-
-        # Prepare data for MongoDB
-        result_data = {
-            'interview_responses': interview_data,
-            'analysis_results_by_question': analysis_results_by_question,
-            'overall_feedback': overall_feedback_text,  # Now plain text
-            'average_ratings_table': average_ratings_data,  # Structured data
-            'final_rating': final_rating,
-        }
-
-        # Insert into MongoDB
+    if ratings_explanations:
         try:
-            result_id = results_collection.insert_one(result_data).inserted_id
-            messages.success(request, f"Results saved successfully with ID: {result_id}")
+            average_ratings_html, overall_feedback_text, final_rating = get_overall_feedback(ratings_explanations)
         except Exception as e:
-            logging.error(f"Error saving to MongoDB: {e}")
-            messages.error(request, "Failed to save results.")
+            logging.error(f"Error in get_overall_feedback: {e}")
+            average_ratings_html = ""
+            overall_feedback_text = "<p>Error generating overall feedback.</p>"
+            final_rating = 0
+    else:
+        average_ratings_html = ""
+        overall_feedback_text = "<p>No feedback available. Please ensure questions have been answered.</p>"
+        final_rating = 0
 
-        context = {
-            'interview_responses': interview_data,
-            'analysis_results_by_question': analysis_results_by_question,
-            'overall_feedback': overall_feedback_text,
-            'average_ratings_table': average_ratings_html,
-            'final_rating': final_rating,
-        }
-        return render(request, 'hr_interview/results.html', context)
+    # Convert HTML to structured data
+    average_ratings_data = parse_html_to_dict(average_ratings_html)
+
+    # Prepare data for MongoDB
+    result_data = {
+        'interview_responses': interview_data,
+        'analysis_results_by_question': analysis_results_by_question,
+        'overall_feedback': overall_feedback_text,
+        'average_ratings_table': average_ratings_data,
+        'final_rating': final_rating,
+    }
+
+    # Insert into MongoDB
+    try:
+        result_id = results_collection.insert_one(result_data).inserted_id
+        messages.success(request, f"Results saved successfully with ID: {result_id}")
+    except Exception as e:
+        logging.error(f"Error saving to MongoDB: {e}")
+        messages.error(request, "Failed to save results.")
+
+    context = {
+        'interview_responses': interview_data,
+        'analysis_results_by_question': analysis_results_by_question,
+        'overall_feedback': overall_feedback_text,
+        'average_ratings_table': average_ratings_html,
+        'final_rating': final_rating,
+    }
+    return render(request, 'hr_interview/results.html', context)
 
 def home(request):
         return render(request, 'hr_interview/home.html')
