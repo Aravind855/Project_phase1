@@ -21,6 +21,8 @@ from django.conf import settings
 from . import models 
 from datetime import datetime
 from urllib.parse import quote_plus
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import cv2
 import time
 # import pyaudio
@@ -766,8 +768,7 @@ def conduct_interview(model, resume_text, interview_type="general"):
 
 # ----- View Functions -----
 
-from io import BytesIO
-from django.core.files.uploadedfile import InMemoryUploadedFile
+
 
 def index(request, interview_type=None):
     if not interview_type:
