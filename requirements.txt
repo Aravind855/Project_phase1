@@ -10,4 +10,4 @@ beautifulsoup4
 gunicorn
 python-dotenv
 white-noise
-bycrypt
+bcrypt
