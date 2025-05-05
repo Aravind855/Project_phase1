@@ -14,6 +14,7 @@ from bson.json_util import dumps
 from PIL import Image
 import pytesseract
 import google.generativeai as genai
+import bcrypt
 import random
 from prettytable import PrettyTable
 from pymongo import MongoClient
@@ -29,6 +30,7 @@ import time
 import logging
 import threading
 from bs4 import BeautifulSoup
+from .forms import LoginForm, CandidateSignupForm, RecruiterSignupForm , CandidateProfileForm , JobPostingForm , ScheduleInterviewForm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -573,26 +575,6 @@ def parse_html_to_dict(html_content):
             table_data = {'headers': headers, 'rows': rows}
         return table_data
 
-# def audio_detection():
-#         global audio_alert, stop_audio_detection
-
-#         # Initialize pyaudio
-#         audio = pyaudio.PyAudio()
-#         stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
-
-#         while not stop_audio_detection:
-#             # Read audio data
-#             data = np.frombuffer(stream.read(1024, exception_on_overflow=False), dtype=np.int16)
-#             volume = np.linalg.norm(data)
-
-#             # Trigger alert if volume exceeds threshold
-#             audio_alert = volume > audio_threshold
-
-#         # Clean up audio resources
-#         stream.stop_stream()
-#         stream.close()
-#         audio.terminate()
-
 def gen_frames():
         global audio_alert, stop_audio_detection
 
@@ -950,3 +932,500 @@ def home(request):
 
 def ai_interview_options(request):
         return render(request, 'hr_interview/ai_interview_options.html')
+
+def login_view(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user_type = form.cleaned_data['user_type']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password'].encode('utf-8')
+
+            collection = db['candidate_users'] if user_type == 'candidate' else db['recruiter_users']
+            user = collection.find_one({'email': email})
+
+            if user:
+                stored_password = user['password'].encode('utf-8')
+                if bcrypt.checkpw(password, stored_password):
+                    request.session['user_type'] = user_type
+                    request.session['user_email'] = email
+                    redirect_url = '/candidate_dashboard/' if user_type == 'candidate' else '/recruiter_dashboard/'
+                    messages.success(request, 'Login successful.')
+                    return redirect(redirect_url)
+                else:
+                    messages.error(request, 'Invalid password.')
+            else:
+                messages.error(request, 'User not found.')
+        else:
+            messages.error(request, 'Invalid form data.')
+    else:
+        form = LoginForm()
+
+    return render(request, 'hr_interview/login.html', {'form': form})
+
+def candidate_signup(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    collection = db['candidate_users']
+
+    if request.method == 'POST':
+        form = CandidateSignupForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            if collection.find_one({'email': email}):
+                messages.error(request, 'Email already registered.')
+                return render(request, 'hr_interview/candidate_signup.html', {'form': form})
+
+            password = form.cleaned_data['password'].encode('utf-8')
+            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+
+            user_data = {
+                'name': form.cleaned_data['name'],
+                'email': email,
+                'phone_number': form.cleaned_data['phone_number'],
+                'password': hashed_password.decode('utf-8'),
+                'created_at': datetime.now()
+            }
+
+            try:
+                collection.insert_one(user_data)
+                messages.success(request, 'Signup successful. Please login.')
+                return redirect('login')
+            except Exception as e:
+                logging.error(f"Error saving candidate to MongoDB: {e}")
+                messages.error(request, 'Failed to save user data.')
+        else:
+            messages.error(request, 'Invalid form data.')
+    else:
+        form = CandidateSignupForm()
+
+    return render(request, 'hr_interview/candidate_signup.html', {'form': form})
+
+def recruiter_signup(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    collection = db['recruiter_users']
+
+    if request.method == 'POST':
+        form = RecruiterSignupForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            if collection.find_one({'email': email}):
+                messages.error(request, 'Email already registered.')
+                return render(request, 'hr_interview/recruiter_signup.html', {'form': form})
+
+            password = form.cleaned_data['password'].encode('utf-8')
+            hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())
+
+            user_data = {
+                'company_name': form.cleaned_data['company_name'],
+                'recruiter_name': form.cleaned_data['recruiter_name'],
+                'email': email,
+                'phone_number': form.cleaned_data['phone_number'],
+                'password': hashed_password.decode('utf-8'),
+                'created_at': datetime.now()
+            }
+
+            try:
+                collection.insert_one(user_data)
+                messages.success(request, 'Signup successful. Please login.')
+                return redirect('login')
+            except Exception as e:
+                logging.error(f"Error saving recruiter to MongoDB: {e}")
+                messages.error(request, 'Failed to save user data.')
+        else:
+            messages.error(request, 'Invalid form data.')
+    else:
+        form = RecruiterSignupForm()
+
+    return render(request, 'hr_interview/recruiter_signup.html', {'form': form})
+
+def candidate_dashboard(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    collection = db['candidate_users']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'candidate':
+        messages.error(request, 'Please login as a candidate.')
+        return redirect('login')
+
+    user = collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    context = {
+        'user': {
+            'name': user['name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        }
+    }
+    return render(request, 'hr_interview/candidate_dashboard.html', context)
+
+def recruiter_dashboard(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    collection = db['recruiter_users']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'recruiter':
+        messages.error(request, 'Please login as a recruiter.')
+        return redirect('login')
+
+    user = collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    context = {
+        'user': {
+            'recruiter_name': user['recruiter_name'],
+            'company_name': user['company_name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        }
+    }
+    return render(request, 'hr_interview/recruiter_dashboard.html', context)
+
+def candidate_profile(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    collection = db['candidate_users']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'candidate':
+        messages.error(request, 'Please login as a candidate.')
+        return redirect('login')
+
+    user = collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = CandidateProfileForm(request.POST)
+        if form.is_valid():
+            update_data = {
+                'skills': form.cleaned_data['skills'],
+                'experience': form.cleaned_data['experience'],
+                'projects': form.cleaned_data['projects'],
+                'updated_at': datetime.now()
+            }
+            try:
+                collection.update_one(
+                    {'email': user_email},
+                    {'$set': update_data}
+                )
+                messages.success(request, 'Profile updated successfully.')
+                return redirect('candidate_profile')
+            except Exception as e:
+                logging.error(f"Error updating candidate profile: {e}")
+                messages.error(request, 'Failed to update profile.')
+        else:
+            messages.error(request, 'Invalid form data.')
+    else:
+        form = CandidateProfileForm(initial={
+            'skills': user.get('skills', ''),
+            'experience': user.get('experience', ''),
+            'projects': user.get('projects', '')
+        })
+
+    context = {
+        'user': {
+            'name': user['name'],
+            'email': user['email'],
+            'phone_number': user['phone_number'],
+            'skills': user.get('skills'),
+            'experience': user.get('experience'),
+            'projects': user.get('projects')
+        },
+        'form': form
+    }
+    return render(request, 'hr_interview/candidate_profile.html', context)
+
+def candidate_dashboard(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['candidate_users']
+    interviews_collection = db['interviews']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'candidate':
+        messages.error(request, 'Please login as a candidate.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    interviews = list(interviews_collection.find({'candidate_email': user_email}).sort('scheduled_at', -1))
+
+    context = {
+        'user': {
+            'name': user['name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        },
+        'interviews': interviews
+    }
+    return render(request, 'hr_interview/candidate_dashboard.html', context)
+
+def manage_jobs(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['recruiter_users']
+    jobs_collection = db['jobs']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'recruiter':
+        messages.error(request, 'Please login as a recruiter.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = JobPostingForm(request.POST)
+        if form.is_valid():
+            job_data = {
+                'title': form.cleaned_data['title'],
+                'description': form.cleaned_data['description'],
+                'location': form.cleaned_data['location'],
+                'skills_required': form.cleaned_data['skills_required'],
+                'company_name': user['company_name'],
+                'recruiter_email': user_email,
+                'created_at': datetime.now()
+            }
+            try:
+                jobs_collection.insert_one(job_data)
+                messages.success(request, 'Job posted successfully.')
+                return redirect('manage_jobs')
+            except Exception as e:
+                logging.error(f"Error posting job: {e}")
+                messages.error(request, 'Failed to post job.')
+        else:
+            messages.error(request, 'Invalid form data.')
+    else:
+        form = JobPostingForm()
+
+    jobs = list(jobs_collection.find({'recruiter_email': user_email}).sort('created_at', -1))
+
+    context = {
+        'user': {
+            'recruiter_name': user['recruiter_name'],
+            'company_name': user['company_name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        },
+        'jobs': jobs,
+        'form': form
+    }
+    return render(request, 'hr_interview/manage_jobs.html', context)
+
+from bson.objectid import ObjectId
+
+def explore_jobs(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['candidate_users']
+    jobs_collection = db['jobs']
+    applications_collection = db['job_applications']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'candidate':
+        messages.error(request, 'Please login as a candidate.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    jobs = list(jobs_collection.find().sort('created_at', -1))
+    applied_job_ids = [str(app['job_id']) for app in applications_collection.find({'candidate_email': user_email})]
+
+    for job in jobs:
+        job['id'] = str(job['_id'])
+        job['applied'] = job['id'] in applied_job_ids
+
+    context = {
+        'user': {
+            'name': user['name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        },
+        'jobs': jobs
+    }
+    return render(request, 'hr_interview/explore_jobs.html', context)
+
+def apply_job(request, job_id):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['candidate_users']
+    jobs_collection = db['jobs']
+    applications_collection = db['job_applications']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'candidate':
+        messages.error(request, 'Please login as a candidate.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    job = jobs_collection.find_one({'_id': ObjectId(job_id)})
+    if not job:
+        messages.error(request, 'Job not found.')
+        return redirect('explore_jobs')
+
+    existing_application = applications_collection.find_one({
+        'candidate_email': user_email,
+        'job_id': job_id
+    })
+    if existing_application:
+        messages.warning(request, 'You have already applied for this job.')
+        return redirect('explore_jobs')
+
+    application_data = {
+        'candidate_email': user_email,
+        'candidate_name': user['name'],
+        'candidate_phone': user['phone_number'],
+        'candidate_skills': user.get('skills', ''),
+        'candidate_experience': user.get('experience', ''),
+        'candidate_projects': user.get('projects', ''),
+        'job_id': job_id,
+        'job_title': job['title'],
+        'job_company': job['company_name'],
+        'recruiter_email': job['recruiter_email'],
+        'applied_at': datetime.now()
+    }
+
+    try:
+        applications_collection.insert_one(application_data)
+        messages.success(request, 'Job applied.')
+    except Exception as e:
+        logging.error(f"Error submitting application: {e}")
+        messages.error(request, 'Failed to submit application.')
+
+    return redirect('explore_jobs')
+
+def view_candidates(request):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['recruiter_users']
+    applications_collection = db['job_applications']
+    interviews_collection = db['interviews']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'recruiter':
+        messages.error(request, 'Please login as a recruiter.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    applications = list(applications_collection.find({'recruiter_email': user_email}).sort('applied_at', -1))
+    for application in applications:
+        application['job_id'] = str(application['job_id'])
+        application['interview_scheduled'] = bool(interviews_collection.find_one({
+            'candidate_email': application['candidate_email'],
+            'job_id': application['job_id'],
+            'recruiter_email': user_email
+        }))
+
+    context = {
+        'user': {
+            'recruiter_name': user['recruiter_name'],
+            'company_name': user['company_name'],
+            'email': user['email'],
+            'phone_number': user['phone_number']
+        },
+        'applications': applications
+    }
+    return render(request, 'hr_interview/view_candidates.html', context)
+
+def schedule_interview_direct(request, job_id, candidate_email):
+    client = MongoClient(settings.MONGODB_URI)
+    db = client[settings.DB_NAME]
+    user_collection = db['recruiter_users']
+    jobs_collection = db['jobs']
+    candidate_collection = db['candidate_users']
+    interviews_collection = db['interviews']
+
+    user_email = request.session.get('user_email')
+    user_type = request.session.get('user_type')
+
+    if not user_email or user_type != 'recruiter':
+        messages.error(request, 'Please login as a recruiter.')
+        return redirect('login')
+
+    user = user_collection.find_one({'email': user_email})
+    if not user:
+        messages.error(request, 'User not found.')
+        return redirect('login')
+
+    job = jobs_collection.find_one({'_id': ObjectId(job_id)})
+    if not job:
+        messages.error(request, 'Job not found.')
+        return redirect('view_candidates')
+
+    candidate = candidate_collection.find_one({'email': candidate_email})
+    if not candidate:
+        messages.error(request, 'Candidate not found.')
+        return redirect('view_candidates')
+
+    existing_interview = interviews_collection.find_one({
+        'candidate_email': candidate_email,
+        'job_id': job_id,
+        'recruiter_email': user_email
+    })
+    if existing_interview:
+        messages.warning(request, 'Interview already scheduled for this candidate.')
+        return redirect('view_candidates')
+
+    interview_data = {
+        'job_id': job_id,
+        'job_title': job['title'],
+        'company_name': job['company_name'],
+        'candidate_email': candidate_email,
+        'candidate_name': candidate['name'],
+        'recruiter_email': user_email,
+        'scheduled_at': datetime.now()
+    }
+
+    try:
+        interviews_collection.insert_one(interview_data)
+        messages.success(request, 'Interview scheduled.')
+    except Exception as e:
+        logging.error(f"Error scheduling interview: {e}")
+        messages.error(request, 'Failed to schedule interview.')
+
+    return redirect('view_candidates')

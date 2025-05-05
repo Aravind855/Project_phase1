@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Options - ZeroTouch Hire</title>
+    <title>Candidate Dashboard - ZeroTouch Hire</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -14,7 +13,7 @@
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
         }
-    
+
         body {
             background: #f5f7fa;
             color: #1a202c;
@@ -23,51 +22,47 @@
             flex-direction: column;
             min-height: 100vh;
         }
-    
+
         .container {
-            width: 100vw;
+            width: 100%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8rem 4vw 4rem;
+            padding: 8rem 5% 4rem;
         }
-        
-    
+
         nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            padding: 1.5rem 4vw;
+            padding: 1.5rem 5%;
             background: #ffffff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             z-index: 1000;
         }
-    
+
         .nav-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
-    
+
         .logo {
             font-size: 1.5rem;
             font-weight: 700;
             color: #2d3748;
             text-decoration: none;
         }
-    
+
         .nav-links {
             display: flex;
             gap: 2rem;
             align-items: center;
         }
-    
+
         .nav-links a {
             text-decoration: none;
             color: #4a5568;
@@ -75,51 +70,70 @@
             font-size: 0.95rem;
             transition: color 0.3s ease;
         }
-    
+
         .nav-links a:hover {
             color: #3182ce;
         }
-    
-        .login-options {
-            width: 100%;
+
+        .profile-icon {
+            font-size: 1.5rem;
+            color: #4a5568;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .profile-icon:hover {
+            color: #3182ce;
+        }
+
+        .dashboard-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .dashboard-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-options {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            padding: 2rem 4vw;
-            flex-wrap: wrap;
+            margin-bottom: 3rem;
         }
-        
-        .login-card {
+
+        .option-card {
             background: #ffffff;
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            flex: 1 1 45%;
-            min-width: 300px;
-            max-width: 600px;
+            width: 300px;
             text-align: center;
             transition: transform 0.3s ease;
         }
-        
-    
-        .login-card:hover {
+
+        .option-card:hover {
             transform: translateY(-5px);
         }
-    
-        .login-card h2 {
-            font-size: 1.75rem;
+
+        .option-card h2 {
+            font-size: 1.5rem;
             font-weight: 600;
             color: #2d3748;
             margin-bottom: 1rem;
         }
-    
-        .login-card p {
+
+        .option-card p {
             font-size: 1rem;
             color: #718096;
             margin-bottom: 1.5rem;
         }
-    
-        .login-btn {
+
+        .option-btn {
             display: inline-block;
             width: 100%;
             padding: 0.875rem;
@@ -132,114 +146,180 @@
             text-decoration: none;
             transition: background 0.3s ease, transform 0.2s ease;
         }
-    
-        .login-btn:hover {
+
+        .option-btn:hover {
             background: #2b6cb0;
             transform: translateY(-2px);
         }
-    
-        .login-btn:active {
+
+        .option-btn:active {
             transform: scale(0.98);
         }
-    
+
+        .interviews-section {
+            margin-top: 3rem;
+        }
+
+        .interviews-section h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+        }
+
+        .interview-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .interview-card {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        .interview-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .interview-card p {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .start-interview-btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #3182ce;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.3s ease, transform 0.2s ease;
+            margin-top: 1rem;
+        }
+
+        .start-interview-btn:hover {
+            background: #2b6cb0;
+            transform: translateY(-2px);
+        }
+
+        .start-interview-btn:active {
+            transform: scale(0.98);
+        }
+
+        .no-interviews {
+            font-size: 1rem;
+            color: #718096;
+            text-align: center;
+        }
 
         footer {
             background: #2d3748;
             color: #e2e8f0;
-            padding: 4rem 4vw;
-            width: 100vw;
+            padding: 4rem 5%;
+            width: 100%;
             margin-top: auto;
         }
-        
+
         .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 2rem;
-            width: 100%;
         }
-    
+
         .footer-section h3 {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
             color: #ffffff;
         }
-    
+
         .footer-section p {
             color: #cbd5e0;
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
-    
+
         .footer-links {
             list-style: none;
         }
-    
+
         .footer-links li {
             margin-bottom: 0.5rem;
         }
-    
+
         .footer-links a {
             color: #cbd5e0;
             text-decoration: none;
             font-size: 0.9rem;
             transition: color 0.3s ease;
         }
-    
+
         .footer-links a:hover {
             color: #63b3ed;
         }
-    
+
         .social-links {
             display: flex;
             gap: 1rem;
         }
-    
+
         .social-links a {
             color: #e2e8f0;
             font-size: 1.25rem;
             transition: color 0.3s ease;
         }
-    
+
         .social-links a:hover {
             color: #63b3ed;
         }
-    
+
         @media (max-width: 768px) {
-            .login-options {
+            .dashboard-options {
                 flex-direction: column;
                 align-items: center;
             }
-    
-            .login-card {
+
+            .option-card {
                 width: 80%;
             }
-    
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
-            }
         }
-    
+
         @media (max-width: 480px) {
-            .login-card h2 {
+            .dashboard-content h1 {
+                font-size: 2rem;
+            }
+
+            .interviews-section h2 {
                 font-size: 1.5rem;
             }
-    
-            .login-card p {
-                font-size: 0.9rem;
+
+            .interview-card h3 {
+                font-size: 1.1rem;
             }
-    
+
             .footer-content {
                 grid-template-columns: 1fr;
                 text-align: center;
             }
-    
+
             .social-links {
                 justify-content: center;
             }
         }
     </style>
-    
 </head>
 <body>
     <div class="container">
@@ -251,20 +331,44 @@
                     <a href="#about">About</a>
                     <a href="#features">Features</a>
                     <a href="#contact">Contact</a>
+                    <a href="{% url 'candidate_profile' %}"><i class="fas fa-user-circle profile-icon"></i></a>
                 </div>
             </div>
         </nav>
 
-        <section class="login-options">
-            <div class="login-card">
-                <h2>Candidate Login</h2>
-                <p>Access your interview dashboard and start your journey.</p>
-                <a href="{% url 'login' %}" class="login-btn">Login as Candidate</a>
+        <section class="dashboard-content">
+            <h1>Welcome, {{ user.name }}!</h1>
+            <div class="dashboard-options">
+                <div class="option-card">
+                    <h2>Explore Jobs</h2>
+                    <p>Find exciting job opportunities tailored for you.</p>
+                    <a href="{% url 'explore_jobs' %}" class="option-btn">Explore Now</a>
+                </div>
+                <div class="option-card">
+                    <h2>Practice Mock Interview</h2>
+                    <p>Sharpen your skills with AI-powered mock interviews.</p>
+                    <a href="{% url 'index' interview_type='mixed' %}" class="option-btn">Start Practice</a>
+                </div>
+                <div class="option-card">
+                    <h2>Scheduled Interviews</h2>
+                    <p>View your scheduled interviews and start them.</p>
+                    <a href="#interviews" class="option-btn">View Interviews</a>
+                </div>
             </div>
-            <div class="login-card">
-                <h2>Recruiter Login</h2>
-                <p>Manage interviews and review candidate profiles.</p>
-                <a href="{% url 'login' %}" class="login-btn">Login as Recruiter</a>
+            <div class="interviews-section" id="interviews">
+                <h2>Scheduled Interviews</h2>
+                <div class="interview-list">
+                    {% for interview in interviews %}
+                        <div class="interview-card">
+                            <h3>{{ interview.job_title }}</h3>
+                            <p><strong>Company:</strong> {{ interview.company_name }}</p>
+                            <p><strong>Scheduled on:</strong> {{ interview.scheduled_at|date:"F d, Y" }}</p>
+                            <a href="{% url 'index' interview_type='mixed' %}" class="start-interview-btn">Start Interview</a>
+                        </div>
+                    {% empty %}
+                        <p class="no-interviews">No interviews scheduled.</p>
+                    {% endfor %}
+                </div>
             </div>
         </section>
 

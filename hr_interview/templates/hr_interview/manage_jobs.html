@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Options - ZeroTouch Hire</title>
+    <title>Manage Jobs - ZeroTouch Hire</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         * {
             margin: 0;
@@ -14,7 +13,7 @@
             box-sizing: border-box;
             font-family: 'Inter', sans-serif;
         }
-    
+
         body {
             background: #f5f7fa;
             color: #1a202c;
@@ -23,51 +22,47 @@
             flex-direction: column;
             min-height: 100vh;
         }
-    
+
         .container {
-            width: 100vw;
+            width: 100%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8rem 4vw 4rem;
+            padding: 8rem 5% 4rem;
         }
-        
-    
+
         nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            padding: 1.5rem 4vw;
+            padding: 1.5rem 5%;
             background: #ffffff;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             z-index: 1000;
         }
-    
+
         .nav-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
         }
-    
+
         .logo {
             font-size: 1.5rem;
             font-weight: 700;
             color: #2d3748;
             text-decoration: none;
         }
-    
+
         .nav-links {
             display: flex;
             gap: 2rem;
             align-items: center;
         }
-    
+
         .nav-links a {
             text-decoration: none;
             color: #4a5568;
@@ -75,53 +70,109 @@
             font-size: 0.95rem;
             transition: color 0.3s ease;
         }
-    
+
         .nav-links a:hover {
             color: #3182ce;
         }
-    
-        .login-options {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            padding: 2rem 4vw;
-            flex-wrap: wrap;
+
+        .manage-jobs-container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        
-        .login-card {
+
+        .manage-jobs-container h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .jobs-section {
+            margin-bottom: 3rem;
+        }
+
+        .jobs-section h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+        }
+
+        .job-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .job-card {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        .job-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-card p {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-jobs {
+            font-size: 1rem;
+            color: #718096;
+            text-align: center;
+        }
+
+        .job-form-section {
             background: #ffffff;
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            flex: 1 1 45%;
-            min-width: 300px;
-            max-width: 600px;
-            text-align: center;
-            transition: transform 0.3s ease;
         }
-        
-    
-        .login-card:hover {
-            transform: translateY(-5px);
-        }
-    
-        .login-card h2 {
+
+        .job-form-section h2 {
             font-size: 1.75rem;
             font-weight: 600;
             color: #2d3748;
-            margin-bottom: 1rem;
-        }
-    
-        .login-card p {
-            font-size: 1rem;
-            color: #718096;
             margin-bottom: 1.5rem;
         }
-    
-        .login-btn {
-            display: inline-block;
+
+        .job-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .job-form label {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .job-form input,
+        .job-form textarea {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
             width: 100%;
+        }
+
+        .job-form textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .job-form button {
             padding: 0.875rem;
             background: #3182ce;
             color: #ffffff;
@@ -129,117 +180,112 @@
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 500;
-            text-decoration: none;
+            cursor: pointer;
             transition: background 0.3s ease, transform 0.2s ease;
         }
-    
-        .login-btn:hover {
+
+        .job-form button:hover {
             background: #2b6cb0;
             transform: translateY(-2px);
         }
-    
-        .login-btn:active {
+
+        .job-form button:active {
             transform: scale(0.98);
         }
-    
 
         footer {
             background: #2d3748;
             color: #e2e8f0;
-            padding: 4rem 4vw;
-            width: 100vw;
+            padding: 4rem 5%;
+            width: 100%;
             margin-top: auto;
         }
-        
+
         .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 2rem;
-            width: 100%;
         }
-    
+
         .footer-section h3 {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 1.25rem;
             color: #ffffff;
         }
-    
+
         .footer-section p {
             color: #cbd5e0;
             font-size: 0.9rem;
             margin-bottom: 1rem;
         }
-    
+
         .footer-links {
             list-style: none;
         }
-    
+
         .footer-links li {
             margin-bottom: 0.5rem;
         }
-    
+
         .footer-links a {
             color: #cbd5e0;
             text-decoration: none;
             font-size: 0.9rem;
             transition: color 0.3s ease;
         }
-    
+
         .footer-links a:hover {
             color: #63b3ed;
         }
-    
+
         .social-links {
             display: flex;
             gap: 1rem;
         }
-    
+
         .social-links a {
             color: #e2e8f0;
             font-size: 1.25rem;
             transition: color 0.3s ease;
         }
-    
+
         .social-links a:hover {
             color: #63b3ed;
         }
-    
+
         @media (max-width: 768px) {
-            .login-options {
-                flex-direction: column;
-                align-items: center;
-            }
-    
-            .login-card {
-                width: 80%;
-            }
-    
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
+            .job-form-section {
+                padding: 1.5rem;
             }
         }
-    
+
         @media (max-width: 480px) {
-            .login-card h2 {
+            .manage-jobs-container h1 {
+                font-size: 1.75rem;
+            }
+
+            .jobs-section h2,
+            .job-form-section h2 {
                 font-size: 1.5rem;
             }
-    
-            .login-card p {
-                font-size: 0.9rem;
+
+            .job-card h3 {
+                font-size: 1.1rem;
             }
-    
+
             .footer-content {
                 grid-template-columns: 1fr;
                 text-align: center;
             }
-    
+
             .social-links {
                 justify-content: center;
             }
         }
     </style>
-    
 </head>
 <body>
     <div class="container">
@@ -248,23 +294,39 @@
                 <div class="logo">ZeroTouch Hire</div>
                 <div class="nav-links">
                     <a href="{% url 'home' %}">Home</a>
-                    <a href="#about">About</a>
+                    <a href="{% url 'recruiter_dashboard' %}">Dashboard</a>
                     <a href="#features">Features</a>
                     <a href="#contact">Contact</a>
                 </div>
             </div>
         </nav>
 
-        <section class="login-options">
-            <div class="login-card">
-                <h2>Candidate Login</h2>
-                <p>Access your interview dashboard and start your journey.</p>
-                <a href="{% url 'login' %}" class="login-btn">Login as Candidate</a>
+        <section class="manage-jobs-container">
+            <h1>Manage Jobs</h1>
+            <div class="jobs-section">
+                <h2>Your Posted Jobs</h2>
+                <div class="job-list">
+                    {% for job in jobs %}
+                        <div class="job-card">
+                            <h3>{{ job.title }}</h3>
+                            <p><strong>Company:</strong> {{ job.company_name }}</p>
+                            <p><strong>Location:</strong> {{ job.location }}</p>
+                            <p><strong>Skills Required:</strong> {{ job.skills_required }}</p>
+                            <p><strong>Description:</strong> {{ job.description }}</p>
+                            <p><strong>Posted on:</strong> {{ job.created_at|date:"F d, Y" }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="no-jobs">You have not posted any jobs yet.</p>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="login-card">
-                <h2>Recruiter Login</h2>
-                <p>Manage interviews and review candidate profiles.</p>
-                <a href="{% url 'login' %}" class="login-btn">Login as Recruiter</a>
+            <div class="job-form-section">
+                <h2>Add New Job</h2>
+                <form method="POST" class="job-form">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit">Post Job</button>
+                </form>
             </div>
         </section>
 
